@@ -393,22 +393,22 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 const buttons = [
-  { id: 'pinpon',    label: 'ピンポーン',     note: '発言したい',       cat: 'reaction', sound: { type: 'tone', freq: [880, 660], dur: 0.3 } },
-  { id: 'bubu',      label: 'ブブー',         note: '違う',             cat: 'reaction', sound: { type: 'tone', freq: [220, 180], dur: 0.4 } },
-  { id: 'hee',       label: 'へぇ',           note: '納得',             cat: 'reaction', sound: { type: 'tone', freq: [440, 660, 550], dur: 0.5 } },
-  { id: 'huh',       label: 'ん?',            note: 'わからない',       cat: 'confirm',  sound: { type: 'tone', freq: [330, 440], dur: 0.3 } },
-  { id: 'slow',      label: 'ゆっくり',       note: 'ペース調整',       cat: 'confirm',  sound: { type: 'tone', freq: [550, 440, 330], dur: 0.6 } },
-  { id: 'detail',    label: '詳しく',         note: '深掘り要望',       cat: 'confirm',  sound: { type: 'tone', freq: [440, 550, 660], dur: 0.4 } },
-  { id: 'sleepy',    label: 'ぽわぽわ',       note: '眠い',             cat: 'state',    sound: { type: 'tone', freq: [330, 280, 250], dur: 0.8 } },
-  { id: 'hungry',    label: 'ぐ〜〜',         note: 'お腹すいた',       cat: 'state',    sound: { type: 'noise', dur: 0.5 } },
-  { id: 'applause',  label: '拍手＋指笛',     note: 'すごく良い',       cat: 'reaction', sound: { type: 'noise', dur: 0.5 } },
-  { id: 'fall',      label: 'ファーーーー',   note: '降りてきた',       cat: 'reaction', sound: { type: 'tone', freq: [660, 880, 1100], dur: 0.7 } },
-  { id: 'chin',      label: 'チーン',         note: '決まった',         cat: 'switch',   sound: { type: 'tone', freq: [1320], dur: 0.6 } },
-  { id: 'shakin',    label: 'シャキーン',     note: '真剣モード',       cat: 'switch',   sound: { type: 'tone', freq: [1100, 1760], dur: 0.3 } },
-  { id: 'fanfare',   label: 'テッテレー',     note: '達成',             cat: 'switch',   sound: { type: 'tone', freq: [660, 660, 880, 1100], dur: 0.6 } },
-  { id: 'deden',     label: 'デデーン',       note: '失敗を笑いに',     cat: 'laugh',    sound: { type: 'tone', freq: [220, 220, 165], dur: 0.6 } },
-  { id: 'wow',       label: 'うわぁお',       note: '強い感情を笑いに', cat: 'laugh',    sound: { type: 'tone', freq: [550, 770, 660], dur: 0.5 } },
-  { id: 'cat',       label: 'にゃあ',         note: '使い方は自由',     cat: 'blank',    sound: { type: 'tone', freq: [770, 660, 550], dur: 0.4 } }
+  { id: 'pinpon',    label: 'ピンポーン',     note: '発言したい',       cat: 'reaction', file: 'sounds/pinpon.mp3',   sound: { type: 'tone', freq: [880, 660], dur: 0.3 } },
+  { id: 'bubu',      label: 'ブブー',         note: '違う',             cat: 'reaction', file: 'sounds/bubu.mp3',     sound: { type: 'tone', freq: [220, 180], dur: 0.4 } },
+  { id: 'hee',       label: 'へぇ',           note: '納得',             cat: 'reaction', file: 'sounds/hee.mp3',      sound: { type: 'tone', freq: [440, 660, 550], dur: 0.5 } },
+  { id: 'huh',       label: 'ん?',            note: 'わからない',       cat: 'confirm',  file: 'sounds/huh.mp3',      sound: { type: 'tone', freq: [330, 440], dur: 0.3 } },
+  { id: 'slow',      label: 'ゆっくり',       note: 'ペース調整',       cat: 'confirm',  file: 'sounds/slow.mp3',     sound: { type: 'tone', freq: [550, 440, 330], dur: 0.6 } },
+  { id: 'detail',    label: '詳しく',         note: '深掘り要望',       cat: 'confirm',  file: 'sounds/detail.mp3',   sound: { type: 'tone', freq: [440, 550, 660], dur: 0.4 } },
+  { id: 'sleepy',    label: 'ぽわぽわ',       note: '眠い',             cat: 'state',    file: 'sounds/sleepy.mp3',   sound: { type: 'tone', freq: [330, 280, 250], dur: 0.8 } },
+  { id: 'hungry',    label: 'ぐ〜〜',         note: 'お腹すいた',       cat: 'state',    file: 'sounds/hungry.mp3',   sound: { type: 'noise', dur: 0.5 } },
+  { id: 'applause',  label: '拍手＋指笛',     note: 'すごく良い',       cat: 'reaction', file: 'sounds/applause.mp3', sound: { type: 'noise', dur: 0.5 } },
+  { id: 'fall',      label: 'ファーーーー',   note: '降りてきた',       cat: 'reaction', file: 'sounds/fall.mp3',     sound: { type: 'tone', freq: [660, 880, 1100], dur: 0.7 } },
+  { id: 'chin',      label: 'チーン',         note: '決まった',         cat: 'switch',   file: 'sounds/chin.mp3',     sound: { type: 'tone', freq: [1320], dur: 0.6 } },
+  { id: 'shakin',    label: 'シャキーン',     note: '真剣モード',       cat: 'switch',   file: 'sounds/shakin.mp3',   sound: { type: 'tone', freq: [1100, 1760], dur: 0.3 } },
+  { id: 'fanfare',   label: 'テッテレー',     note: '達成',             cat: 'switch',   file: 'sounds/fanfare.mp3',  sound: { type: 'tone', freq: [660, 660, 880, 1100], dur: 0.6 } },
+  { id: 'deden',     label: 'デデーン',       note: '失敗を笑いに',     cat: 'laugh',    file: 'sounds/deden.mp3',    sound: { type: 'tone', freq: [220, 220, 165], dur: 0.6 } },
+  { id: 'wow',       label: 'うわぁお',       note: '強い感情を笑いに', cat: 'laugh',    file: 'sounds/wow.mp3',      sound: { type: 'tone', freq: [550, 770, 660], dur: 0.5 } },
+  { id: 'cat',       label: 'にゃあ',         note: '使い方は自由',     cat: 'blank',    file: 'sounds/cat.mp3',      sound: { type: 'tone', freq: [770, 660, 550], dur: 0.4 } }
 ];
 
 const userId = 'u_' + Math.random().toString(36).slice(2, 8);
@@ -445,7 +445,52 @@ function ensureAudio() {
   return audioCtx;
 }
 
-function playSound(sound) {
+const audioCache = {};
+const audioAvailable = {};
+
+async function preloadAudio(button) {
+  if (!button.file) return;
+  if (audioCache[button.id] !== undefined) return;
+
+  try {
+    const audio = new Audio(button.file);
+    audio.preload = 'auto';
+    audio.volume = 0.7;
+
+    await new Promise((resolve, reject) => {
+      audio.addEventListener('canplaythrough', resolve, { once: true });
+      audio.addEventListener('error', reject, { once: true });
+      setTimeout(() => reject(new Error('timeout')), 3000);
+    });
+
+    audioCache[button.id] = audio;
+    audioAvailable[button.id] = true;
+  } catch (e) {
+    audioAvailable[button.id] = false;
+  }
+}
+
+function preloadAllAudio() {
+  buttons.forEach(b => {
+    preloadAudio(b);
+  });
+}
+
+function playButtonSound(button) {
+  if (audioAvailable[button.id] && audioCache[button.id]) {
+    try {
+      const audio = audioCache[button.id].cloneNode();
+      audio.volume = 0.7;
+      audio.play().catch(() => {
+        playSyntheticSound(button.sound);
+      });
+      return;
+    } catch (e) {}
+  }
+  playSyntheticSound(button.sound);
+}
+
+function playSyntheticSound(sound) {
   const ctx = ensureAudio();
   if (!ctx) return;
   const now = ctx.currentTime;
@@ -479,6 +524,14 @@ function playSound(sound) {
     gain.gain.value = 0.1;
     src.connect(gain).connect(ctx.destination);
     src.start(now);
+  }
+}
+
+function playSound(soundOrButton) {
+  if (soundOrButton && soundOrButton.file !== undefined) {
+    playButtonSound(soundOrButton);
+  } else {
+    playSyntheticSound(soundOrButton);
   }
 }
 
@@ -521,7 +574,7 @@ function pulse(btn) {
 }
 
 async function handlePress(b, btn) {
-  playSound(b.sound);
+  playSound(b);
   pulse(btn);
 
   if (sessionCode) {
@@ -679,7 +732,7 @@ async function joinSession() {
 
     if (ev.uid !== userId) {
       const b = buttons.find(b => b.id === ev.btnId);
-      if (b) playSound(b.sound);
+      if (b) playSound(b);
       const btn = document.querySelector('[data-id="' + ev.btnId + '"]');
       if (btn) pulse(btn);
     }
@@ -705,6 +758,7 @@ function soloMode() {
 }
 
 renderButtons();
+preloadAllAudio();
 if (userName) {
   document.getElementById('name-input').value = userName;
 }
