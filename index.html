@@ -454,17 +454,19 @@ async function preloadAudio(button) {
   if (audioCache[button.id] !== undefined) return;
 
   try {
-    const audio = new Audio(button.file);
-    audio.preload = 'auto';
-    audio.volume = 0.7;
-
-    await new Promise((resolve, reject) => {
-      audio.addEventListener('canplaythrough', resolve, { once: true });
-      audio.addEventListener('error', reject, { once: true });
-      setTimeout(() => reject(new Error('timeout')), 3000);
-    });
-
-    audioCache[button.id] = audio;
+    const ctx = ensureAudio();
+    if (!ctx) {
+      audioAvailable[button.id] = false;
+      return;
+    }
+    const response = await fetch(button.file, { cache: 'no-cache' });
+    if (!response.ok) {
+      audioAvailable[button.id] = false;
+      return;
+    }
+    const arrayBuffer = await response.arrayBuffer();
+    const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+    audioCache[button.id] = audioBuffer;
     audioAvailable[button.id] = true;
   } catch (e) {
     audioAvailable[button.id] = false;
@@ -478,16 +480,44 @@ function preloadAllAudio() {
 }
 
 function playButtonSound(button) {
+  const ctx = ensureAudio();
+  if (!ctx) {
+    playSyntheticSound(button.sound);
+    return;
+  }
+
   if (audioAvailable[button.id] && audioCache[button.id]) {
     try {
-      const audio = audioCache[button.id].cloneNode();
-      audio.volume = 0.7;
-      audio.play().catch(() => {
-        playSyntheticSound(button.sound);
-      });
+      const src = ctx.createBufferSource();
+      src.buffer = audioCache[button.id];
+      const gain = ctx.createGain();
+      gain.gain.value = 0.7;
+      src.connect(gain).connect(ctx.destination);
+      src.start(0);
       return;
     } catch (e) {}
   }
+
+  if (audioAvailable[button.id] === undefined && button.file) {
+    preloadAudio(button).then(() => {
+      if (audioAvailable[button.id] && audioCache[button.id]) {
+        try {
+          const src = ctx.createBufferSource();
+          src.buffer = audioCache[button.id];
+          const gain = ctx.createGain();
+          gain.gain.value = 0.7;
+          src.connect(gain).connect(ctx.destination);
+          src.start(0);
+          return;
+        } catch (e) {}
+      }
+      playSyntheticSound(button.sound);
+    }).catch(() => {
+      playSyntheticSound(button.sound);
+    });
+    return;
+  }
+
   playSyntheticSound(button.sound);
 }
 
@@ -575,6 +605,7 @@ function pulse(btn) {
 }
 
 async function handlePress(b, btn) {
+  ensureAudio();
   playSound(b);
   pulse(btn);
 
@@ -759,7 +790,14 @@ function soloMode() {
 }
 
 renderButtons();
-preloadAllAudio();
+let audioPreloaded = false;
+function ensureAudioPreloaded() {
+  if (audioPreloaded) return;
+  audioPreloaded = true;
+  preloadAllAudio();
+}
+document.addEventListener('click', ensureAudioPreloaded, { once: false });
+document.addEventListener('touchstart', ensureAudioPreloaded, { once: false });
 if (userName) {
   document.getElementById('name-input').value = userName;
 }
