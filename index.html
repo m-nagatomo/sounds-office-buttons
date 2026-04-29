@@ -72,6 +72,79 @@
     font-weight: 500;
   }
 
+  .recent-sessions {
+    background: #FFFFFF;
+    border-radius: 8px;
+    border: 0.5px solid rgba(0,0,0,0.1);
+    padding: 12px;
+    margin-bottom: 1.5rem;
+  }
+  .recent-sessions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .recent-sessions-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: #6B7C80;
+  }
+  .recent-refresh {
+    background: transparent;
+    border: 0.5px solid rgba(0,0,0,0.1);
+    border-radius: 4px;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #6B7C80;
+    padding: 0;
+    line-height: 1;
+  }
+  .recent-refresh:hover {
+    background: #F5F1EC;
+  }
+  .recent-sessions-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 32px;
+  }
+  .recent-empty {
+    font-size: 12px;
+    color: #B4B2A9;
+    font-style: italic;
+    padding: 4px 0;
+  }
+  .recent-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: #F5F1EC;
+    border: 0.5px solid rgba(0,0,0,0.05);
+    border-radius: 16px;
+    cursor: pointer;
+    font-size: 12px;
+    color: #2C3E42;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .recent-item:hover {
+    background: #D4A574;
+    border-color: #D4A574;
+  }
+  .recent-item .recent-code {
+    font-weight: 500;
+  }
+  .recent-item .recent-meta {
+    color: #6B7C80;
+    font-size: 11px;
+  }
+  .recent-item:hover .recent-meta {
+    color: #2C3E42;
+  }
+
   .stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -237,11 +310,23 @@
 </div>
 
 <div class="session-bar">
+  <label>名前</label>
+  <input type="text" id="name-input" placeholder="例: まい" maxlength="20" style="flex: 0 1 120px; min-width: 80px;" />
   <label>セッション</label>
   <input type="text" id="session-input" placeholder="例: 会議室A" maxlength="30" />
   <button id="session-join">参加</button>
   <button id="session-solo">ソロモード</button>
   <span class="session-status" id="session-status">未接続</span>
+</div>
+
+<div class="recent-sessions" id="recent-sessions-area">
+  <div class="recent-sessions-header">
+    <span class="recent-sessions-title">最近のセッション（1週間以内）</span>
+    <button class="recent-refresh" id="recent-refresh" title="更新">⟳</button>
+  </div>
+  <div class="recent-sessions-list" id="recent-sessions-list">
+    <div class="recent-empty">読み込み中...</div>
+  </div>
 </div>
 
 <div class="stats">
@@ -290,7 +375,8 @@ import {
   onValue,
   serverTimestamp,
   onDisconnect,
-  remove
+  remove,
+  get
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const firebaseConfig = {
@@ -326,6 +412,7 @@ const buttons = [
 ];
 
 const userId = 'u_' + Math.random().toString(36).slice(2, 8);
+let userName = '';
 let sessionCode = null;
 let presenceUnsub = null;
 let logUnsub = null;
@@ -333,7 +420,15 @@ let presenceRefForUser = null;
 let presenceInterval = null;
 let counts = {};
 let userColors = {};
+let userNames = {};
 const colorPalette = ['#85B7EB', '#5DCAA5', '#EF9F27', '#AFA9EC', '#ED93B1', '#F09595', '#97C459'];
+
+try {
+  const savedName = localStorage.getItem('sounds-office-name');
+  if (savedName) {
+    userName = savedName;
+  }
+} catch (e) {}
 
 let audioCtx = null;
 function ensureAudio() {
@@ -434,6 +529,7 @@ async function handlePress(b, btn) {
       const logRef = ref(db, `sessions/${sessionCode}/log`);
       await push(logRef, {
         uid: userId,
+        name: userName || '名無し',
         btnId: b.id,
         label: b.label,
         ts: serverTimestamp()
@@ -444,7 +540,7 @@ async function handlePress(b, btn) {
   } else {
     counts[b.id] = (counts[b.id] || 0) + 1;
     document.getElementById('count-' + b.id).textContent = counts[b.id];
-    addFeed({ uid: userId, btnId: b.id, label: b.label, ts: Date.now() }, true);
+    addFeed({ uid: userId, name: userName || 'あなた', btnId: b.id, label: b.label, ts: Date.now() }, true);
     updateLocalStats();
   }
 }
@@ -456,7 +552,14 @@ function addFeed(ev, isMine) {
 
   const item = document.createElement('div');
   item.className = 'feed-item';
-  const who = ev.uid === userId ? 'あなた' : ('参加者 ' + ev.uid.slice(2, 5));
+  let who;
+  if (ev.uid === userId) {
+    who = (userName || 'あなた') + '（自分）';
+  } else if (ev.name) {
+    who = ev.name;
+  } else {
+    who = '参加者 ' + ev.uid.slice(2, 5);
+  }
   const t = new Date(ev.ts);
   const tStr = t.getHours().toString().padStart(2, '0') + ':' +
                t.getMinutes().toString().padStart(2, '0') + ':' +
@@ -503,11 +606,17 @@ function cleanupSession() {
 }
 
 async function joinSession() {
+  const nameInput = document.getElementById('name-input');
   const input = document.getElementById('session-input');
   const code = input.value.trim();
   if (!code) {
     input.focus();
     return;
+  }
+
+  userName = nameInput.value.trim();
+  if (userName) {
+    try { localStorage.setItem('sounds-office-name', userName); } catch (e) {}
   }
 
   cleanupSession();
@@ -519,11 +628,11 @@ async function joinSession() {
   ensureAudio();
 
   presenceRefForUser = ref(db, `sessions/${sessionCode}/presence/${userId}`);
-  await set(presenceRefForUser, serverTimestamp());
+  await set(presenceRefForUser, { name: userName || '名無し', ts: serverTimestamp() });
   onDisconnect(presenceRefForUser).remove();
   presenceInterval = setInterval(() => {
     if (presenceRefForUser) {
-      set(presenceRefForUser, serverTimestamp()).catch(() => {});
+      set(presenceRefForUser, { name: userName || '名無し', ts: serverTimestamp() }).catch(() => {});
     }
   }, 20000);
 
@@ -532,7 +641,8 @@ async function joinSession() {
     const val = snapshot.val() || {};
     const now = Date.now();
     const active = Object.keys(val).filter(u => {
-      const ts = val[u];
+      const entry = val[u];
+      const ts = (entry && typeof entry === 'object') ? entry.ts : entry;
       return typeof ts === 'number' && (now - ts < 60000);
     });
     document.getElementById('stat-users').textContent = active.length;
@@ -580,6 +690,7 @@ async function joinSession() {
     isInitialLoad = false;
     initialEvents.slice(-10).forEach(ev => addFeed(ev, ev.uid === userId));
     initialEvents = [];
+    loadRecentSessions();
   }, 1500);
 }
 
@@ -594,12 +705,112 @@ function soloMode() {
 }
 
 renderButtons();
+if (userName) {
+  document.getElementById('name-input').value = userName;
+}
 document.getElementById('session-join').addEventListener('click', joinSession);
 document.getElementById('session-solo').addEventListener('click', soloMode);
 document.getElementById('session-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') joinSession();
 });
+document.getElementById('name-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') joinSession();
+});
+document.getElementById('recent-refresh').addEventListener('click', loadRecentSessions);
 updateLocalStats();
+loadRecentSessions();
+
+function formatRelativeTime(ts) {
+  const now = Date.now();
+  const diff = now - ts;
+  const sec = Math.floor(diff / 1000);
+  const min = Math.floor(sec / 60);
+  const hour = Math.floor(min / 60);
+  const day = Math.floor(hour / 24);
+  if (sec < 60) return 'たった今';
+  if (min < 60) return min + '分前';
+  if (hour < 24) return hour + '時間前';
+  if (day < 7) return day + '日前';
+  return Math.floor(day / 7) + '週間前';
+}
+
+async function loadRecentSessions() {
+  const listEl = document.getElementById('recent-sessions-list');
+  listEl.innerHTML = '<div class="recent-empty">読み込み中...</div>';
+
+  try {
+    const sessionsRef = ref(db, 'sessions');
+    const snapshot = await get(sessionsRef);
+    const data = snapshot.val() || {};
+
+    const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+    const sessions = [];
+
+    Object.keys(data).forEach(code => {
+      const session = data[code];
+      let lastActivity = 0;
+      let userCount = 0;
+
+      if (session.presence) {
+        Object.values(session.presence).forEach(entry => {
+          const ts = (entry && typeof entry === 'object') ? entry.ts : entry;
+          if (typeof ts === 'number') {
+            if (ts > lastActivity) lastActivity = ts;
+            if (Date.now() - ts < 60000) userCount++;
+          }
+        });
+      }
+
+      if (session.log) {
+        Object.values(session.log).forEach(ev => {
+          if (ev && typeof ev.ts === 'number' && ev.ts > lastActivity) {
+            lastActivity = ev.ts;
+          }
+        });
+      }
+
+      if (lastActivity > oneWeekAgo) {
+        sessions.push({ code, lastActivity, userCount });
+      }
+    });
+
+    sessions.sort((a, b) => b.lastActivity - a.lastActivity);
+
+    if (sessions.length === 0) {
+      listEl.innerHTML = '<div class="recent-empty">直近1週間に活動のあるセッションはありません</div>';
+      return;
+    }
+
+    listEl.innerHTML = '';
+    sessions.forEach(s => {
+      const item = document.createElement('div');
+      item.className = 'recent-item';
+      const meta = s.userCount > 0
+        ? formatRelativeTime(s.lastActivity) + ' / ' + s.userCount + '人接続中'
+        : formatRelativeTime(s.lastActivity);
+      item.innerHTML =
+        '<span class="recent-code">' + escapeHtml(s.code) + '</span>' +
+        '<span class="recent-meta">' + meta + '</span>';
+      item.addEventListener('click', () => {
+        document.getElementById('session-input').value = s.code;
+        joinSession();
+      });
+      listEl.appendChild(item);
+    });
+  } catch (e) {
+    console.error('load recent sessions error', e);
+    listEl.innerHTML = '<div class="recent-empty">読み込みエラー</div>';
+  }
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 </script>
 </body>
 </html>
