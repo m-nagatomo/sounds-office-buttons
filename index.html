@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sounds Office 気持ちボタン</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Yu Gothic', sans-serif;
+    margin: 0;
+    padding: 1rem;
+    background: #F5F1EC;
+    color: #2C3E42;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .header { margin-bottom: 1.5rem; }
+  .title {
+    font-size: 22px;
+    font-weight: 500;
+    margin: 0 0 4px;
+  }
+  .subtitle {
+    font-size: 13px;
+    color: #6B7C80;
+    margin: 0;
+  }
+
+  .session-bar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    padding: 12px;
+    background: #FFFFFF;
+    border-radius: 8px;
+    border: 0.5px solid rgba(0,0,0,0.1);
+  }
+  .session-bar label {
+    font-size: 13px;
+    color: #6B7C80;
+    white-space: nowrap;
+  }
+  .session-bar input {
+    flex: 1;
+    min-width: 120px;
+    padding: 8px 12px;
+    font-size: 14px;
+    border: 0.5px solid rgba(0,0,0,0.15);
+    border-radius: 6px;
+    background: #FFFFFF;
+  }
+  .session-bar button {
+    padding: 8px 16px;
+    font-size: 14px;
+    border: 0.5px solid rgba(0,0,0,0.15);
+    border-radius: 6px;
+    background: #FFFFFF;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .session-bar button:hover { background: #F5F1EC; }
+  .session-status {
+    font-size: 12px;
+    color: #6B7C80;
+    margin-left: auto;
+  }
+  .session-status.connected {
+    color: #0F6E56;
+    font-weight: 500;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 1rem;
+  }
+  .stat {
+    background: #FFFFFF;
+    border-radius: 8px;
+    padding: 10px 12px;
+    border: 0.5px solid rgba(0,0,0,0.05);
+  }
+  .stat-label {
+    font-size: 11px;
+    color: #6B7C80;
+    margin-bottom: 2px;
+  }
+  .stat-value {
+    font-size: 18px;
+    font-weight: 500;
+  }
+
+  .cat-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 11px;
+    color: #6B7C80;
+    margin-bottom: 1rem;
+  }
+  .cat-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .cat-legend i {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    display: inline-block;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 8px;
+    margin-bottom: 1.5rem;
+  }
+  @media (max-width: 480px) {
+    .grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  .btn {
+    aspect-ratio: 1;
+    padding: 8px;
+    border: 0.5px solid rgba(0,0,0,0.1);
+    border-radius: 8px;
+    background: #FFFFFF;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: transform 0.08s, background 0.15s;
+    position: relative;
+    overflow: hidden;
+    font-family: inherit;
+    color: inherit;
+  }
+  .btn:hover { background: #F5F1EC; }
+  .btn:active { transform: scale(0.95); }
+  .btn.pulse {
+    background: #D4A574;
+    border-color: #D4A574;
+  }
+  .btn-label {
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .btn-note {
+    font-size: 10px;
+    color: #6B7C80;
+    text-align: center;
+    line-height: 1.3;
+  }
+  .btn-count {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    font-size: 10px;
+    color: #6B7C80;
+  }
+
+  .btn.cat-reaction { border-left: 3px solid #5DCAA5; }
+  .btn.cat-confirm { border-left: 3px solid #85B7EB; }
+  .btn.cat-state { border-left: 3px solid #EF9F27; }
+  .btn.cat-switch { border-left: 3px solid #AFA9EC; }
+  .btn.cat-laugh { border-left: 3px solid #ED93B1; }
+  .btn.cat-blank { border-left: 3px solid #B4B2A9; }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: #6B7C80;
+    margin: 1rem 0 8px;
+  }
+  .feed {
+    background: #FFFFFF;
+    border-radius: 8px;
+    padding: 12px;
+    min-height: 80px;
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 12px;
+    color: #6B7C80;
+    border: 0.5px solid rgba(0,0,0,0.05);
+  }
+  .feed-empty {
+    font-style: italic;
+    color: #B4B2A9;
+  }
+  .feed-item {
+    padding: 6px 0;
+    border-bottom: 0.5px solid rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .feed-item:last-child { border-bottom: none; }
+  .feed-item .who { color: #B4B2A9; }
+  .feed-item .what {
+    color: #2C3E42;
+    font-weight: 500;
+  }
+
+  .ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: #D4A574;
+    opacity: 0.6;
+    pointer-events: none;
+    animation: ripple 0.6s ease-out;
+  }
+  @keyframes ripple {
+    from { transform: scale(0); opacity: 0.6; }
+    to { transform: scale(4); opacity: 0; }
+  }
+
+  .footer {
+    margin-top: 2rem;
+    text-align: center;
+    font-size: 11px;
+    color: #B4B2A9;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1 class="title">Sounds Office 気持ちボタン</h1>
+  <p class="subtitle">参加者の気持ちを音で表現する。セッションコードを共有すると、押下が全員に届きます。</p>
+</div>
+
+<div class="session-bar">
+  <label>セッション</label>
+  <input type="text" id="session-input" placeholder="例: 会議室A" maxlength="30" />
+  <button id="session-join">参加</button>
+  <button id="session-solo">ソロモード</button>
+  <span class="session-status" id="session-status">未接続</span>
+</div>
+
+<div class="stats">
+  <div class="stat">
+    <div class="stat-label">参加者</div>
+    <div class="stat-value" id="stat-users">-</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">セッション内押下数</div>
+    <div class="stat-value" id="stat-total">0</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">よく押されている</div>
+    <div class="stat-value" id="stat-top" style="font-size: 14px;">-</div>
+  </div>
+</div>
+
+<div class="cat-legend">
+  <span><i style="background:#5DCAA5"></i>反応</span>
+  <span><i style="background:#85B7EB"></i>確認</span>
+  <span><i style="background:#EF9F27"></i>状態</span>
+  <span><i style="background:#AFA9EC"></i>切替</span>
+  <span><i style="background:#ED93B1"></i>笑い</span>
+  <span><i style="background:#B4B2A9"></i>余白</span>
+</div>
+
+<div class="grid" id="button-grid"></div>
+
+<div class="section-title">最近の押下</div>
+<div class="feed" id="feed">
+  <div class="feed-empty">セッションに参加すると、参加者の押下がここに流れます。</div>
+</div>
+
+<div class="footer">Sounds Office prototype / 気持ちボタン</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getDatabase,
+  ref,
+  push,
+  onChildAdded,
+  query,
+  limitToLast,
+  set,
+  onValue,
+  serverTimestamp,
+  onDisconnect,
+  remove
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC5yhFds9Tt9WimdJb-UIkx9rjLf2NtUjI",
+  authDomain: "sounds-office-buttons.firebaseapp.com",
+  databaseURL: "https://sounds-office-buttons-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "sounds-office-buttons",
+  storageBucket: "sounds-office-buttons.firebasestorage.app",
+  messagingSenderId: "395710131216",
+  appId: "1:395710131216:web:b4c8ca78dd674191402e95"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const buttons = [
+  { id: 'pinpon',    label: 'ピンポーン',     note: '発言したい',       cat: 'reaction', sound: { type: 'tone', freq: [880, 660], dur: 0.3 } },
+  { id: 'bubu',      label: 'ブブー',         note: '違う',             cat: 'reaction', sound: { type: 'tone', freq: [220, 180], dur: 0.4 } },
+  { id: 'hee',       label: 'へぇ',           note: '納得',             cat: 'reaction', sound: { type: 'tone', freq: [440, 660, 550], dur: 0.5 } },
+  { id: 'huh',       label: 'ん?',            note: 'わからない',       cat: 'confirm',  sound: { type: 'tone', freq: [330, 440], dur: 0.3 } },
+  { id: 'slow',      label: 'ゆっくり',       note: 'ペース調整',       cat: 'confirm',  sound: { type: 'tone', freq: [550, 440, 330], dur: 0.6 } },
+  { id: 'detail',    label: '詳しく',         note: '深掘り要望',       cat: 'confirm',  sound: { type: 'tone', freq: [440, 550, 660], dur: 0.4 } },
+  { id: 'sleepy',    label: 'ぽわぽわ',       note: '眠い',             cat: 'state',    sound: { type: 'tone', freq: [330, 280, 250], dur: 0.8 } },
+  { id: 'hungry',    label: 'ぐ〜〜',         note: 'お腹すいた',       cat: 'state',    sound: { type: 'noise', dur: 0.5 } },
+  { id: 'applause',  label: '拍手＋指笛',     note: 'すごく良い',       cat: 'reaction', sound: { type: 'noise', dur: 0.5 } },
+  { id: 'fall',      label: 'ファーーーー',   note: '降りてきた',       cat: 'reaction', sound: { type: 'tone', freq: [660, 880, 1100], dur: 0.7 } },
+  { id: 'chin',      label: 'チーン',         note: '決まった',         cat: 'switch',   sound: { type: 'tone', freq: [1320], dur: 0.6 } },
+  { id: 'shakin',    label: 'シャキーン',     note: '真剣モード',       cat: 'switch',   sound: { type: 'tone', freq: [1100, 1760], dur: 0.3 } },
+  { id: 'fanfare',   label: 'テッテレー',     note: '達成',             cat: 'switch',   sound: { type: 'tone', freq: [660, 660, 880, 1100], dur: 0.6 } },
+  { id: 'deden',     label: 'デデーン',       note: '失敗を笑いに',     cat: 'laugh',    sound: { type: 'tone', freq: [220, 220, 165], dur: 0.6 } },
+  { id: 'wow',       label: 'うわぁお',       note: '強い感情を笑いに', cat: 'laugh',    sound: { type: 'tone', freq: [550, 770, 660], dur: 0.5 } },
+  { id: 'cat',       label: 'にゃあ',         note: '使い方は自由',     cat: 'blank',    sound: { type: 'tone', freq: [770, 660, 550], dur: 0.4 } }
+];
+
+const userId = 'u_' + Math.random().toString(36).slice(2, 8);
+let sessionCode = null;
+let presenceUnsub = null;
+let logUnsub = null;
+let presenceRefForUser = null;
+let presenceInterval = null;
+let counts = {};
+let userColors = {};
+const colorPalette = ['#85B7EB', '#5DCAA5', '#EF9F27', '#AFA9EC', '#ED93B1', '#F09595', '#97C459'];
+
+let audioCtx = null;
+function ensureAudio() {
+  if (!audioCtx) {
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) {
+      audioCtx = null;
+    }
+  }
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  return audioCtx;
+}
+
+function playSound(sound) {
+  const ctx = ensureAudio();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+
+  if (sound.type === 'tone') {
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.exponentialRampToValueAtTime(0.15, now + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + sound.dur);
+    gain.connect(ctx.destination);
+
+    const segDur = sound.dur / sound.freq.length;
+    sound.freq.forEach((f, i) => {
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f, now + i * segDur);
+      osc.connect(gain);
+      osc.start(now + i * segDur);
+      osc.stop(now + (i + 1) * segDur + 0.05);
+    });
+  } else if (sound.type === 'noise') {
+    const bufferSize = ctx.sampleRate * sound.dur;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-3 * i / bufferSize);
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    const gain = ctx.createGain();
+    gain.gain.value = 0.1;
+    src.connect(gain).connect(ctx.destination);
+    src.start(now);
+  }
+}
+
+function getColorForUser(uid) {
+  if (!userColors[uid]) {
+    const taken = Object.keys(userColors).length;
+    userColors[uid] = colorPalette[taken % colorPalette.length];
+  }
+  return userColors[uid];
+}
+
+function renderButtons() {
+  const grid = document.getElementById('button-grid');
+  grid.innerHTML = '';
+  buttons.forEach(b => {
+    const btn = document.createElement('button');
+    btn.className = 'btn cat-' + b.cat;
+    btn.dataset.id = b.id;
+    btn.innerHTML =
+      '<span class="btn-count" id="count-' + b.id + '">0</span>' +
+      '<span class="btn-label">' + b.label + '</span>' +
+      '<span class="btn-note">' + b.note + '</span>';
+    btn.addEventListener('click', () => handlePress(b, btn));
+    grid.appendChild(btn);
+  });
+}
+
+function pulse(btn) {
+  btn.classList.add('pulse');
+  setTimeout(() => btn.classList.remove('pulse'), 200);
+
+  const ripple = document.createElement('span');
+  ripple.className = 'ripple';
+  const size = 30;
+  ripple.style.width = ripple.style.height = size + 'px';
+  ripple.style.left = (btn.offsetWidth / 2 - size / 2) + 'px';
+  ripple.style.top = (btn.offsetHeight / 2 - size / 2) + 'px';
+  btn.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 700);
+}
+
+async function handlePress(b, btn) {
+  playSound(b.sound);
+  pulse(btn);
+
+  if (sessionCode) {
+    try {
+      const logRef = ref(db, `sessions/${sessionCode}/log`);
+      await push(logRef, {
+        uid: userId,
+        btnId: b.id,
+        label: b.label,
+        ts: serverTimestamp()
+      });
+    } catch (e) {
+      console.error('write error', e);
+    }
+  } else {
+    counts[b.id] = (counts[b.id] || 0) + 1;
+    document.getElementById('count-' + b.id).textContent = counts[b.id];
+    addFeed({ uid: userId, btnId: b.id, label: b.label, ts: Date.now() }, true);
+    updateLocalStats();
+  }
+}
+
+function addFeed(ev, isMine) {
+  const feed = document.getElementById('feed');
+  const empty = feed.querySelector('.feed-empty');
+  if (empty) empty.remove();
+
+  const item = document.createElement('div');
+  item.className = 'feed-item';
+  const who = ev.uid === userId ? 'あなた' : ('参加者 ' + ev.uid.slice(2, 5));
+  const t = new Date(ev.ts);
+  const tStr = t.getHours().toString().padStart(2, '0') + ':' +
+               t.getMinutes().toString().padStart(2, '0') + ':' +
+               t.getSeconds().toString().padStart(2, '0');
+  item.innerHTML =
+    '<span><span style="color:' + getColorForUser(ev.uid) + '; font-weight: 500;">●</span> ' +
+    '<span class="who">' + who + '</span> → ' +
+    '<span class="what">' + ev.label + '</span></span>' +
+    '<span style="color: #B4B2A9; font-size: 11px;">' + tStr + '</span>';
+  feed.insertBefore(item, feed.firstChild);
+  while (feed.children.length > 50) feed.lastChild.remove();
+}
+
+function updateLocalStats() {
+  document.getElementById('stat-users').textContent = sessionCode ? '-' : '1';
+  let total = 0;
+  let topId = null, topCount = 0;
+  Object.keys(counts).forEach(id => {
+    total += counts[id];
+    if (counts[id] > topCount) { topCount = counts[id]; topId = id; }
+  });
+  document.getElementById('stat-total').textContent = total;
+  if (topId) {
+    const b = buttons.find(b => b.id === topId);
+    document.getElementById('stat-top').textContent = b.label + ' (' + topCount + ')';
+  } else {
+    document.getElementById('stat-top').textContent = '-';
+  }
+}
+
+function cleanupSession() {
+  if (logUnsub) { logUnsub(); logUnsub = null; }
+  if (presenceUnsub) { presenceUnsub(); presenceUnsub = null; }
+  if (presenceInterval) { clearInterval(presenceInterval); presenceInterval = null; }
+  if (presenceRefForUser) {
+    remove(presenceRefForUser).catch(() => {});
+    presenceRefForUser = null;
+  }
+  counts = {};
+  buttons.forEach(b => {
+    const el = document.getElementById('count-' + b.id);
+    if (el) el.textContent = 0;
+  });
+}
+
+async function joinSession() {
+  const input = document.getElementById('session-input');
+  const code = input.value.trim();
+  if (!code) {
+    input.focus();
+    return;
+  }
+
+  cleanupSession();
+  sessionCode = code;
+  document.getElementById('feed').innerHTML = '';
+  document.getElementById('session-status').textContent = '「' + code + '」に接続中';
+  document.getElementById('session-status').className = 'session-status connected';
+
+  ensureAudio();
+
+  presenceRefForUser = ref(db, `sessions/${sessionCode}/presence/${userId}`);
+  await set(presenceRefForUser, serverTimestamp());
+  onDisconnect(presenceRefForUser).remove();
+  presenceInterval = setInterval(() => {
+    if (presenceRefForUser) {
+      set(presenceRefForUser, serverTimestamp()).catch(() => {});
+    }
+  }, 20000);
+
+  const presenceListRef = ref(db, `sessions/${sessionCode}/presence`);
+  presenceUnsub = onValue(presenceListRef, (snapshot) => {
+    const val = snapshot.val() || {};
+    const now = Date.now();
+    const active = Object.keys(val).filter(u => {
+      const ts = val[u];
+      return typeof ts === 'number' && (now - ts < 60000);
+    });
+    document.getElementById('stat-users').textContent = active.length;
+  });
+
+  let isInitialLoad = true;
+  let initialEvents = [];
+  const logRef = ref(db, `sessions/${sessionCode}/log`);
+  const logQuery = query(logRef, limitToLast(50));
+
+  logUnsub = onChildAdded(logQuery, (snapshot) => {
+    const ev = snapshot.val();
+    if (!ev) return;
+
+    counts[ev.btnId] = (counts[ev.btnId] || 0) + 1;
+    const countEl = document.getElementById('count-' + ev.btnId);
+    if (countEl) countEl.textContent = counts[ev.btnId];
+
+    let total = 0, topId = null, topCount = 0;
+    Object.keys(counts).forEach(id => {
+      total += counts[id];
+      if (counts[id] > topCount) { topCount = counts[id]; topId = id; }
+    });
+    document.getElementById('stat-total').textContent = total;
+    if (topId) {
+      const b = buttons.find(b => b.id === topId);
+      document.getElementById('stat-top').textContent = b.label + ' (' + topCount + ')';
+    }
+
+    if (isInitialLoad) {
+      initialEvents.push(ev);
+      return;
+    }
+
+    if (ev.uid !== userId) {
+      const b = buttons.find(b => b.id === ev.btnId);
+      if (b) playSound(b.sound);
+      const btn = document.querySelector('[data-id="' + ev.btnId + '"]');
+      if (btn) pulse(btn);
+    }
+    addFeed(ev, ev.uid === userId);
+  });
+
+  setTimeout(() => {
+    isInitialLoad = false;
+    initialEvents.slice(-10).forEach(ev => addFeed(ev, ev.uid === userId));
+    initialEvents = [];
+  }, 1500);
+}
+
+function soloMode() {
+  cleanupSession();
+  sessionCode = null;
+  document.getElementById('session-status').textContent = 'ソロモード';
+  document.getElementById('session-status').className = 'session-status';
+  document.getElementById('feed').innerHTML = '<div class="feed-empty">ソロモード ─ 自分の押下のみ表示されます。</div>';
+  updateLocalStats();
+  ensureAudio();
+}
+
+renderButtons();
+document.getElementById('session-join').addEventListener('click', joinSession);
+document.getElementById('session-solo').addEventListener('click', soloMode);
+document.getElementById('session-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') joinSession();
+});
+updateLocalStats();
+</script>
+</body>
+</html>
